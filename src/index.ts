@@ -217,9 +217,9 @@ function selectAsset(
   };
 
   const archWords: { [key: string]: string[] } = {
-    x64: ["x86_64", "x64", "amd64"],
-    ia32: ["i686", "x32", "amd32"],
-    arm64: ["aarch64", "arm64"],
+    x64: ["x86_64", "x64", "amd64", "amd_64"],
+    ia32: ["i686", "x32", "amd32", "amd_32"],
+    arm64: ["aarch64", "aarch_64", "arm64", "arm_64"],
   };
 
   if (!(osPlatform in osWords) || !(osArch in archWords)) {
@@ -249,22 +249,30 @@ function selectAsset(
 
   const list: string[] = assets.filter((name) => reTarget.test(name));
 
-  if (list.length === 0 && osArch === "x64") {
+  if (list.length === 0) {
     const targetWords: string[] = [];
-    for (const osWord of osWords[osPlatform]) {
-      targetWords.push(
-        `${osWord}-64`,
-        `${osWord}_64`,
-        `${osWord}64`,
-        `64-${osWord}`,
-        `64_${osWord}`,
-      );
+    let archWord = "";
+    if (osArch == "x64") {
+      archWord = "64";
+    } else if (osArch == "ia32") {
+      archWord = "32";
     }
-    const reTarget = new RegExp(
-      `[^A-Za-z0-9](${targetWords.join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
-      "i",
-    );
-    list.push(...assets.filter((name) => reTarget.test(name)));
+    if (archWord) {
+      for (const osWord of osWords[osPlatform]) {
+        targetWords.push(
+          `${osWord}-${archWord}`,
+          `${osWord}_${archWord}`,
+          `${osWord}${archWord}`,
+          `${archWord}-${osWord}`,
+          `${archWord}_${osWord}`,
+        );
+      }
+      const reTarget = new RegExp(
+        `[^A-Za-z0-9](${targetWords.join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
+        "i",
+      );
+      list.push(...assets.filter((name) => reTarget.test(name)));
+    }
   }
 
   if (list.length === 1) {

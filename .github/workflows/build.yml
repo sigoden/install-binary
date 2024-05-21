@@ -34,6 +34,22 @@ jobs:
         argc --argc-version
       shell: bash
 
+  test-install-argc-with-cache:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
+      uses: ./
+      with:
+        repo: sigoden/argc
+    - name: Test
+      run: |
+        argc --argc-version
+      shell: bash
+
   test-install-protoc-with-tag:
     strategy:
       matrix:
