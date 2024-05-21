@@ -16,8 +16,8 @@ This action installs a binary from Github Releases:
 | `repo`  | **true** | The GitHub repository in `owner/repo` format  |                       |
 | `tag`   | false    | The release tag to download                   | `latest`              |
 | `name`  | false    | The specific binary name within the release   |                       |
+| `cache` | false    | Controls whether the binary is cached         | `false`               |
 | `token` | false    | GitHub token, useful for private repositories | `${{ github.token }}` |
-| `cache` | false    | Controls whether the binary is cached         | `true`                |
 
 ## Usage Examples
 
