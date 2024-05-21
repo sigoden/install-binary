@@ -88,6 +88,7 @@ async function run() {
       `${osPlatform}-${osArch}`,
     );
     core.info(`==> Binaries will be located at: ${installDir}`);
+    await fs.promises.mkdir(installDir, { recursive: true });
 
     const cacheKey = `install-binary/${owner}/${repo}/${tag}/${osPlatform}-${osArch}`;
     if (cacheKey !== undefined) {
@@ -117,51 +118,56 @@ async function run() {
       throw new Error(`Could not find download url for ${assetName}`);
     }
 
+
+    const tempDir = path.join(os.tmpdir(), 'install-binary', cmdName);
+    await fs.promises.mkdir(tempDir, { recursive: true });
+
+    const assetFile = path.join(tempDir, assetName);
+
     core.info(`Downloading ${repo} from ${downloadUrl}`);
-    const assetFile = await tc.downloadTool(
+    await tc.downloadTool(
       downloadUrl,
-      undefined,
+      assetFile,
       `token ${token}`,
       {
         accept: "application/octet-stream",
       },
     );
-    const tempDir = path.join(os.tmpdir(), `install-binary-${cmdName}`);
-    await fs.promises.mkdir(tempDir);
 
     let binName = cmdName;
     if (isWin) {
       binName += ".exe";
     }
 
-    let tempBinFile;
+    let originBinFile;
     if (/\.(gz|tgz|bz2|zip)/.test(assetFile)) {
       core.info(`Uncompress asset file ${assetFile}`);
+      const uncompressDir = path.join(tempDir, "uncompress");
       try {
         if (/\.(gz|tgz|bz2)$/.test(assetFile)) {
-          await tc.extractTar(assetFile, tempDir);
+          await tc.extractTar(assetFile, uncompressDir);
         } else if (assetFile.endsWith(".bz2")) {
-          await tc.extractTar(assetFile, tempDir, "xj");
+          await tc.extractTar(assetFile, uncompressDir, "xj");
         } else if (assetFile.endsWith(".zip")) {
-          await tc.extractZip(assetFile, tempDir);
+          await tc.extractZip(assetFile, uncompressDir);
         }
       } catch (err) {
-        throw new Error(`Failed to extract ${assetFile} to '${tempDir}', ${err}`);
+        throw new Error(`Failed to extract ${assetFile} to '${uncompressDir}', ${err}`);
       }
-      const files = await listFiles(tempDir);
-      tempBinFile = await findBinFile(files, binName);
-      if (!tempBinFile) {
+      const files = await listFiles(uncompressDir);
+      originBinFile = await findBinFile(files, binName);
+      if (!originBinFile) {
         const filePaths = files.map(v => v.path);
-        throw new Error(`No binary found in ${tempDir}. Files: ${filePaths}`);
+        throw new Error(`No binary found in ${uncompressDir}. Files: ${filePaths}`);
       }
     } else {
-      core.info(`Binary is asset file ${assetFile}`);
-      tempBinFile = assetFile;
+      core.info(`The binary is asset file ${assetFile}`);
+      originBinFile = assetFile;
     }
 
     const binFile = path.join(installDir, binName);
 
-    await fs.promises.copyFile(tempBinFile, binFile);
+    await fs.promises.copyFile(originBinFile, binFile);
     if (!isWin) {
       await fs.promises.chmod(binFile, 0o755);
     }
