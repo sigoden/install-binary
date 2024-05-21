@@ -1,0 +1,21 @@
+name: Install a binary from GitHub Releases
+description: Effortlessly install a binary from GitHub Release
+author: sigoden <sigoden@gmail.com>
+branding:
+  icon: play
+  color: blue
+inputs:
+  repo:
+    description: The github repo
+    required: true
+  tag:
+    description: The release tag
+    default: latest
+  name:
+    description: The binary name
+  token:
+    description: The github token
+    default: ${{ github.token }}
+runs:
+  using: node20
+  main: dist/index.js
