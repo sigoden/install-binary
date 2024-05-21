@@ -50,7 +50,7 @@ async function run() {
       });
       tag = release.data.tag_name;
     } else {
-      release = await octokit.rest.repos.getLatestRelease({
+      release = await octokit.rest.repos.getReleaseByTag({
         owner,
         repo,
         tag,
@@ -109,14 +109,14 @@ async function run() {
     );
     if (!assetName) {
       const found = release.data.assets.map((f) => f.name);
-      throw new Error(`Could not find a release for ${tag}. Found: ${found}`);
+      throw new Error(`Failed to find release for ${tag}. Found: ${found}`);
     }
 
     const downloadUrl = release.data.assets.find(
       (v) => v.name == assetName,
     )?.browser_download_url;
     if (!downloadUrl) {
-      throw new Error(`Could not find download url for ${assetName}`);
+      throw new Error(`Failed to find download url for ${assetName}`);
     }
 
     const tempDir = path.join(os.tmpdir(), "install-binary", cmdName);
@@ -136,7 +136,7 @@ async function run() {
 
     let originBinFile;
     if (/\.(gz|tgz|bz2|zip)/.test(assetFile)) {
-      core.info(`Uncompress asset file ${assetFile}`);
+      core.info(`Uncompressing asset file ${assetFile}`);
       const uncompressDir = path.join(tempDir, "uncompress");
       try {
         if (/\.(gz|tgz|bz2)$/.test(assetFile)) {
@@ -148,7 +148,7 @@ async function run() {
         }
       } catch (err) {
         throw new Error(
-          `Failed to extract ${assetFile} to '${uncompressDir}', ${err}`,
+          `Failed to extract ${assetFile} to ${uncompressDir}, error: ${err}`,
         );
       }
       const files = await listFiles(uncompressDir);
@@ -156,11 +156,11 @@ async function run() {
       if (!originBinFile) {
         const filePaths = files.map((v) => v.path);
         throw new Error(
-          `No binary found in ${uncompressDir}. Files: ${filePaths}`,
+          `No binary found in ${uncompressDir}. check files: ${filePaths}`,
         );
       }
     } else {
-      core.info(`The binary is asset file ${assetFile}`);
+      core.info(`Identify binary file ${assetFile}`);
       originBinFile = assetFile;
     }
 
@@ -170,6 +170,8 @@ async function run() {
     if (!isWin) {
       await fs.promises.chmod(binFile, 0o755);
     }
+
+    core.info(`Successfully installed binary ${binFile}`);
 
     try {
       await cache.saveCache([installDir], cacheKey);
@@ -187,7 +189,6 @@ async function run() {
     core.info(`Adding ${installDir} to the path`);
     core.addPath(installDir);
     core.info(`Successfully installed ${repo}`);
-    core.info(`Binaries available at ${installDir}`);
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);

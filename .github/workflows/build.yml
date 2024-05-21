@@ -17,14 +17,14 @@ jobs:
     - run: npm run lint
     - run: npm run build
 
-  test-latest:
+  test-install-argc:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install argc
+    - name: Install binary
       uses: ./
       with:
         repo: sigoden/argc
@@ -33,15 +33,15 @@ jobs:
         argc --argc-version
       shell: bash
 
-  test-tag-input:
-    needs: test-latest
+  test-install-argc-with-tag:
+    needs: test-install-argc
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install argc
+    - name: Install binary
       uses: ./
       with:
         repo: sigoden/argc
@@ -49,4 +49,37 @@ jobs:
     - name: Test
       run: |
         [ "$(argc --argc-version)" == "argc 1.16.0" ]
+      shell: bash
+
+  test-install-task:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
+      uses: ./
+      with:
+        repo: go-task/task
+    - name: Test
+      run: |
+        task --version
+      shell: bash
+
+  test-install-wasm-opt:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
+      uses: ./
+      with:
+        repo: WebAssembly/binaryen
+        name: wasm-opt
+    - name: Test
+      run: |
+        wasm-opt --version
       shell: bash
