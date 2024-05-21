@@ -1,4 +1,4 @@
-name: Install a binary from GitHub Releases
+name: Install a binary from a GitHub Release
 description: Effortlessly install a binary from GitHub Release
 author: sigoden <sigoden@gmail.com>
 branding:
@@ -16,6 +16,9 @@ inputs:
   token:
     description: The github token
     default: ${{ github.token }}
+  cache:
+    description: Use cache
+    default: true
 runs:
   using: node20
   main: dist/index.js

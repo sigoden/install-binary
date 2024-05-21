@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
+import { isBinaryFile } from "isbinaryfile";
 
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
@@ -50,7 +51,7 @@ async function run() {
       });
       tag = release.data.tag_name;
     } else {
-      release = await octokit.rest.repos.getLatestRelease({
+      release = await octokit.rest.repos.getReleaseByTag({
         owner,
         repo,
         tag,
@@ -88,9 +89,11 @@ async function run() {
       `${osPlatform}-${osArch}`,
     );
     core.info(`==> Binaries will be located at: ${installDir}`);
+    await fs.promises.mkdir(installDir, { recursive: true });
 
+    const withCache = (core.getInput("cache") || "true") === "true";
     const cacheKey = `install-binary/${owner}/${repo}/${tag}/${osPlatform}-${osArch}`;
-    if (cacheKey !== undefined) {
+    if (withCache) {
       const ok = await cache.restoreCache([installDir], cacheKey);
       if (ok !== undefined) {
         core.info(`Found ${repo} in the cache: ${installDir}`);
@@ -98,6 +101,8 @@ async function run() {
         core.addPath(installDir);
         return;
       }
+    } else {
+      core.info(`Cache disabled`);
     }
 
     const assetName = selectAsset(
@@ -108,81 +113,88 @@ async function run() {
     );
     if (!assetName) {
       const found = release.data.assets.map((f) => f.name);
-      throw new Error(`Could not find a release for ${tag}. Found: ${found}`);
+      throw new Error(`Failed to find release for ${tag}. Found: ${found}`);
     }
 
-    const downloadUrl = release.data.assets.find((v) => v.name == assetName)
-      ?.browser_download_url;
+    const downloadUrl = release.data.assets.find(
+      (v) => v.name == assetName,
+    )?.browser_download_url;
     if (!downloadUrl) {
-      throw new Error(`Could not find download url for ${assetName}`);
+      throw new Error(`Failed to find download url for ${assetName}`);
     }
+
+    const tempDir = path.join(os.tmpdir(), "install-binary", cmdName);
+    await fs.promises.mkdir(tempDir, { recursive: true });
+
+    const assetFile = path.join(tempDir, assetName);
 
     core.info(`Downloading ${repo} from ${downloadUrl}`);
-    const assetFile = await tc.downloadTool(
-      downloadUrl,
-      undefined,
-      `token ${token}`,
-      {
-        accept: "application/octet-stream",
-      },
-    );
-    const tempDir = path.join(os.tmpdir(), `install-binary-${cmdName}`);
-    await fs.promises.mkdir(tempDir);
+    await tc.downloadTool(downloadUrl, assetFile, `token ${token}`, {
+      accept: "application/octet-stream",
+    });
 
     let binName = cmdName;
     if (isWin) {
       binName += ".exe";
     }
 
-    let tempBinFile;
+    let originBinFile;
     if (/\.(gz|tgz|bz2|zip)/.test(assetFile)) {
-      core.info(`Uncompress asset file ${assetFile}`);
+      core.info(`Uncompressing asset file ${assetFile}`);
+      const uncompressDir = path.join(tempDir, "uncompress");
       try {
         if (/\.(gz|tgz|bz2)$/.test(assetFile)) {
-          await tc.extractTar(assetFile, tempDir);
+          await tc.extractTar(assetFile, uncompressDir);
         } else if (assetFile.endsWith(".bz2")) {
-          await tc.extractTar(assetFile, tempDir, "xj");
+          await tc.extractTar(assetFile, uncompressDir, "xj");
         } else if (assetFile.endsWith(".zip")) {
-          await tc.extractZip(assetFile, tempDir);
+          await tc.extractZip(assetFile, uncompressDir);
         }
       } catch (err) {
-        throw new Error(`Failed to extract ${assetFile} to '${tempDir}', ${err}`);
+        throw new Error(
+          `Failed to extract ${assetFile} to ${uncompressDir}, error: ${err}`,
+        );
       }
-      const files = await listFiles(tempDir);
-      tempBinFile = await findBinFile(files, binName);
-      if (!tempBinFile) {
-        const filePaths = files.map(v => v.path);
-        throw new Error(`No binary found in ${tempDir}. Files: ${filePaths}`);
+      const files = await listFiles(uncompressDir);
+      originBinFile = await findBinFile(files, binName);
+      if (!originBinFile) {
+        const filePaths = files.map((v) => v.path);
+        throw new Error(
+          `No binary found in ${uncompressDir}. check files: ${filePaths}`,
+        );
       }
     } else {
-      core.info(`Binary is asset file ${assetFile}`);
-      tempBinFile = assetFile;
+      core.info(`Identify binary file ${assetFile}`);
+      originBinFile = assetFile;
     }
 
     const binFile = path.join(installDir, binName);
 
-    await fs.promises.copyFile(tempBinFile, binFile);
+    await fs.promises.copyFile(originBinFile, binFile);
     if (!isWin) {
       await fs.promises.chmod(binFile, 0o755);
     }
-    
-    try {
-      await cache.saveCache([installDir], cacheKey);
-    } catch (error) {
-      const typedError = error as Error;
-      if (typedError.name === cache.ValidationError.name) {
-        throw error;
-      } else if (typedError.name === cache.ReserveCacheError.name) {
-        core.info(typedError.message);
-      } else {
-        core.warning(typedError.message);
+
+    core.info(`Successfully installed binary ${binFile}`);
+
+    if (withCache) {
+      try {
+        await cache.saveCache([installDir], cacheKey);
+      } catch (error) {
+        const typedError = error as Error;
+        if (typedError.name === cache.ValidationError.name) {
+          throw error;
+        } else if (typedError.name === cache.ReserveCacheError.name) {
+          core.info(typedError.message);
+        } else {
+          core.warning(typedError.message);
+        }
       }
     }
 
     core.info(`Adding ${installDir} to the path`);
     core.addPath(installDir);
     core.info(`Successfully installed ${repo}`);
-    core.info(`Binaries available at ${installDir}`);
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
@@ -200,14 +212,14 @@ function selectAsset(
 ): string | undefined {
   const osWords: { [key: string]: string[] } = {
     linux: ["linux", "linux-musl", "unknown-linux"],
-    windows: ["windows", "pc-windows"],
-    macos: ["darwin", "apple-darwin", "macos"],
+    windows: ["windows", "pc-windows", "win"],
+    macos: ["darwin", "apple-darwin", "macos", "osx"],
   };
 
   const archWords: { [key: string]: string[] } = {
-    x64: ["x86_64", "x64", "amd64"],
-    ia32: ["i686", "x32", "amd32"],
-    arm64: ["aarch64", "arm64"],
+    x64: ["x86_64", "x64", "amd64", "amd_64"],
+    ia32: ["i686", "x32", "amd32", "amd_32"],
+    arm64: ["aarch64", "aarch_64", "arm64", "arm_64"],
   };
 
   if (!(osPlatform in osWords) || !(osArch in archWords)) {
@@ -237,12 +249,30 @@ function selectAsset(
 
   const list: string[] = assets.filter((name) => reTarget.test(name));
 
-  if (list.length === 0 && osArch === "x64") {
-    const reTarget = new RegExp(
-      `[^A-Za-z0-9](${osWords[osPlatform].concat(["linux-64", "linux_64", "linux64", "64-linux", "64_linux"]).join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
-      "i",
-    );
-    list.push(...assets.filter((name) => reTarget.test(name)));
+  if (list.length === 0) {
+    const targetWords: string[] = [];
+    let archWord = "";
+    if (osArch == "x64") {
+      archWord = "64";
+    } else if (osArch == "ia32") {
+      archWord = "32";
+    }
+    if (archWord) {
+      for (const osWord of osWords[osPlatform]) {
+        targetWords.push(
+          `${osWord}-${archWord}`,
+          `${osWord}_${archWord}`,
+          `${osWord}${archWord}`,
+          `${archWord}-${osWord}`,
+          `${archWord}_${osWord}`,
+        );
+      }
+      const reTarget = new RegExp(
+        `[^A-Za-z0-9](${targetWords.join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
+        "i",
+      );
+      list.push(...assets.filter((name) => reTarget.test(name)));
+    }
   }
 
   if (list.length === 1) {
@@ -261,14 +291,11 @@ function selectAsset(
 }
 
 interface FileObj {
-  path: string,
-  size: number
+  path: string;
+  size: number;
 }
 
-async function findBinFile(
-  files: FileObj[],
-  binName: string,
-) {
+async function findBinFile(files: FileObj[], binName: string) {
   if (files.length == 1) {
     return files[0].path;
   } else if (files.length > 1) {
@@ -298,8 +325,10 @@ async function listFiles(dirPath) {
         await readDir(fullPath);
       } else {
         const stat = await fs.promises.stat(fullPath);
-        if (stat.size > 500 * 1024) {
-          files.push({ path: fullPath, size: stat.size });
+        if (stat.size > 100 * 1024) {
+          if (await isBinaryFile(fullPath)) {
+            files.push({ path: fullPath, size: stat.size });
+          }
         }
       }
     }

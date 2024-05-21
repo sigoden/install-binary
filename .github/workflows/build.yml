@@ -17,14 +17,31 @@ jobs:
     - run: npm run lint
     - run: npm run build
 
-  test-latest:
+  test-install-argc:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install argc
+    - name: Install binary
+      uses: ./
+      with:
+        repo: sigoden/argc
+        cache: false
+    - name: Test
+      run: |
+        argc --argc-version
+      shell: bash
+
+  test-install-argc-with-cache:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
       uses: ./
       with:
         repo: sigoden/argc
@@ -33,20 +50,55 @@ jobs:
         argc --argc-version
       shell: bash
 
-  test-tag-input:
-    needs: test-latest
+  test-install-protoc-with-tag:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install argc
+    - name: Install binary
       uses: ./
       with:
-        repo: sigoden/argc
-        tag: v1.16.0
+        repo: protocolbuffers/protobuf
+        tag: v26.1
+        name: protoc
+        cache: false
     - name: Test
       run: |
-        [ "$(argc --argc-version)" == "argc 1.16.0" ]
+        protoc --version
+      shell: bash
+
+  test-install-task:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
+      uses: ./
+      with:
+        repo: go-task/task
+        cache: false
+    - name: Test
+      run: |
+        task --version
+      shell: bash
+
+  test-install-jq:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install binary
+      uses: ./
+      with:
+        repo: jqlang/jq
+        cache: false
+    - name: Test
+      run: |
+        jq --version
       shell: bash
