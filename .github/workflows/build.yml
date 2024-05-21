@@ -33,8 +33,7 @@ jobs:
         argc --argc-version
       shell: bash
 
-  test-install-argc-with-tag:
-    needs: test-install-argc
+  test-install-protoc-with-tag:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -44,11 +43,11 @@ jobs:
     - name: Install binary
       uses: ./
       with:
-        repo: sigoden/argc
-        tag: v1.16.0
+        repo: protocolbuffers/protobuf
+        tag: v26.1
     - name: Test
       run: |
-        [ "$(argc --argc-version)" == "argc 1.16.0" ]
+        protoc --version
       shell: bash
 
   test-install-task:
@@ -67,7 +66,7 @@ jobs:
         task --version
       shell: bash
 
-  test-install-wasm-opt:
+  test-install-jq:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -77,9 +76,8 @@ jobs:
     - name: Install binary
       uses: ./
       with:
-        repo: WebAssembly/binaryen
-        name: wasm-opt
+        repo: jqlang/jq
     - name: Test
       run: |
-        wasm-opt --version
+        jq --version
       shell: bash
