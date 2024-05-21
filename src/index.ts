@@ -212,7 +212,7 @@ function selectAsset(
 ): string | undefined {
   const osWords: { [key: string]: string[] } = {
     linux: ["linux", "linux-musl", "unknown-linux"],
-    windows: ["windows", "pc-windows"],
+    windows: ["windows", "pc-windows", "win"],
     macos: ["darwin", "apple-darwin", "macos", "osx"],
   };
 
