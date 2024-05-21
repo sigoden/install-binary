@@ -8,7 +8,8 @@
     "fmt": "prettier --write **/*.ts",
     "lint": "eslint **/*.ts",
     "build": "rm -rf dist/ && ncc build src/index.ts --minify",
-    "run": "npm run build && RUNNER_TOOL_CACHE=./runner/cache RUNNER_TEMP=./runner/temp node dist/index.js"
+    "run": "npm run build && RUNNER_TOOL_CACHE=./runner/cache RUNNER_TEMP=./runner/temp node dist/index.js",
+    "precommit": "npm run fmt && npm run lint && npm run build"
   },
   "repository": {
     "type": "git",
@@ -34,7 +35,13 @@
     "@typescript-eslint/parser": "^7.1.0",
     "@vercel/ncc": "^0.38.1",
     "eslint": "^8.57.0",
+    "husky": "^9.0.11",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run precommit"
+    }
   }
 }
