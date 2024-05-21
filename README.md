@@ -26,8 +26,6 @@ This action installs a binary from Github Releases:
 Install the latest binary from a public GitHub repository.
 
 ```yaml
-# ...
-steps:
   - uses: sigoden/install-binary@v1
     with:
       repo: sigoden/argc
@@ -38,8 +36,6 @@ steps:
 Install a specific binary (`protoc`) from a given release tag (`v26.1`) in the `protocolbuffers/protobuf` repository.
 
 ```yaml
-# ...
-steps:
   - uses: sigoden/install-binary@v1
     with:
       repo: protocolbuffers/protobuf
@@ -50,8 +46,6 @@ steps:
 Install a specific binary (`wasm-opt`) from the `WebAssembly/binaryen` repository, which contains multiple binaries.
 
 ```yaml
-# ...
-steps:
   - uses: sigoden/install-binary@v1
     with:
       repo: WebAssembly/binaryen
@@ -63,8 +57,6 @@ steps:
 Install a binary from a private repository using a [Personal Access Token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
 ```yaml
-# ...
-steps:
   - uses: sigoden/install-binary@v1
     with:
       repo: my-org/my-private-repo
