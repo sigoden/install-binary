@@ -112,27 +112,22 @@ async function run() {
       throw new Error(`Could not find a release for ${tag}. Found: ${found}`);
     }
 
-    const downloadUrl = release.data.assets.find((v) => v.name == assetName)
-      ?.browser_download_url;
+    const downloadUrl = release.data.assets.find(
+      (v) => v.name == assetName,
+    )?.browser_download_url;
     if (!downloadUrl) {
       throw new Error(`Could not find download url for ${assetName}`);
     }
 
-
-    const tempDir = path.join(os.tmpdir(), 'install-binary', cmdName);
+    const tempDir = path.join(os.tmpdir(), "install-binary", cmdName);
     await fs.promises.mkdir(tempDir, { recursive: true });
 
     const assetFile = path.join(tempDir, assetName);
 
     core.info(`Downloading ${repo} from ${downloadUrl}`);
-    await tc.downloadTool(
-      downloadUrl,
-      assetFile,
-      `token ${token}`,
-      {
-        accept: "application/octet-stream",
-      },
-    );
+    await tc.downloadTool(downloadUrl, assetFile, `token ${token}`, {
+      accept: "application/octet-stream",
+    });
 
     let binName = cmdName;
     if (isWin) {
@@ -152,13 +147,17 @@ async function run() {
           await tc.extractZip(assetFile, uncompressDir);
         }
       } catch (err) {
-        throw new Error(`Failed to extract ${assetFile} to '${uncompressDir}', ${err}`);
+        throw new Error(
+          `Failed to extract ${assetFile} to '${uncompressDir}', ${err}`,
+        );
       }
       const files = await listFiles(uncompressDir);
       originBinFile = await findBinFile(files, binName);
       if (!originBinFile) {
-        const filePaths = files.map(v => v.path);
-        throw new Error(`No binary found in ${uncompressDir}. Files: ${filePaths}`);
+        const filePaths = files.map((v) => v.path);
+        throw new Error(
+          `No binary found in ${uncompressDir}. Files: ${filePaths}`,
+        );
       }
     } else {
       core.info(`The binary is asset file ${assetFile}`);
@@ -171,7 +170,7 @@ async function run() {
     if (!isWin) {
       await fs.promises.chmod(binFile, 0o755);
     }
-    
+
     try {
       await cache.saveCache([installDir], cacheKey);
     } catch (error) {
@@ -267,14 +266,11 @@ function selectAsset(
 }
 
 interface FileObj {
-  path: string,
-  size: number
+  path: string;
+  size: number;
 }
 
-async function findBinFile(
-  files: FileObj[],
-  binName: string,
-) {
+async function findBinFile(files: FileObj[], binName: string) {
   if (files.length == 1) {
     return files[0].path;
   } else if (files.length > 1) {
