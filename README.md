@@ -1,5 +1,6 @@
 # install-binary
 
+
 [![CI](https://img.shields.io/github/actions/workflow/status/sigoden/aichat/ci.yaml)](https://github.com/sigoden/install-binary/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/sigoden/install-binary)](https://github.com/sigoden/install-binary/releases)
 
