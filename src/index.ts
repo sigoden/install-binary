@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
+import { isBinaryFile } from "isbinaryfile";
 
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
@@ -90,8 +91,9 @@ async function run() {
     core.info(`==> Binaries will be located at: ${installDir}`);
     await fs.promises.mkdir(installDir, { recursive: true });
 
+    const withCache = (core.getInput("cache") || "true") === "true";
     const cacheKey = `install-binary/${owner}/${repo}/${tag}/${osPlatform}-${osArch}`;
-    if (cacheKey !== undefined) {
+    if (withCache) {
       const ok = await cache.restoreCache([installDir], cacheKey);
       if (ok !== undefined) {
         core.info(`Found ${repo} in the cache: ${installDir}`);
@@ -99,6 +101,8 @@ async function run() {
         core.addPath(installDir);
         return;
       }
+    } else {
+      core.info(`Cache disabled`);
     }
 
     const assetName = selectAsset(
@@ -173,16 +177,18 @@ async function run() {
 
     core.info(`Successfully installed binary ${binFile}`);
 
-    try {
-      await cache.saveCache([installDir], cacheKey);
-    } catch (error) {
-      const typedError = error as Error;
-      if (typedError.name === cache.ValidationError.name) {
-        throw error;
-      } else if (typedError.name === cache.ReserveCacheError.name) {
-        core.info(typedError.message);
-      } else {
-        core.warning(typedError.message);
+    if (withCache) {
+      try {
+        await cache.saveCache([installDir], cacheKey);
+      } catch (error) {
+        const typedError = error as Error;
+        if (typedError.name === cache.ValidationError.name) {
+          throw error;
+        } else if (typedError.name === cache.ReserveCacheError.name) {
+          core.info(typedError.message);
+        } else {
+          core.warning(typedError.message);
+        }
       }
     }
 
@@ -207,7 +213,7 @@ function selectAsset(
   const osWords: { [key: string]: string[] } = {
     linux: ["linux", "linux-musl", "unknown-linux"],
     windows: ["windows", "pc-windows"],
-    macos: ["darwin", "apple-darwin", "macos"],
+    macos: ["darwin", "apple-darwin", "macos", "osx"],
   };
 
   const archWords: { [key: string]: string[] } = {
@@ -244,8 +250,18 @@ function selectAsset(
   const list: string[] = assets.filter((name) => reTarget.test(name));
 
   if (list.length === 0 && osArch === "x64") {
+    const targetWords: string[] = [];
+    for (const osWord of osWords[osPlatform]) {
+      targetWords.push(
+        `${osWord}-64`,
+        `${osWord}_64`,
+        `${osWord}64`,
+        `64-${osWord}`,
+        `64_${osWord}`,
+      );
+    }
     const reTarget = new RegExp(
-      `[^A-Za-z0-9](${osWords[osPlatform].concat(["linux-64", "linux_64", "linux64", "64-linux", "64_linux"]).join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
+      `[^A-Za-z0-9](${targetWords.join("|")})(.*\\.(gz|tgz|bz2|zip|exe)|([^.]*))$`,
       "i",
     );
     list.push(...assets.filter((name) => reTarget.test(name)));
@@ -301,8 +317,10 @@ async function listFiles(dirPath) {
         await readDir(fullPath);
       } else {
         const stat = await fs.promises.stat(fullPath);
-        if (stat.size > 500 * 1024) {
-          files.push({ path: fullPath, size: stat.size });
+        if (stat.size > 100 * 1024) {
+          if (await isBinaryFile(fullPath)) {
+            files.push({ path: fullPath, size: stat.size });
+          }
         }
       }
     }

@@ -7,12 +7,13 @@ This action installs a binary from Github Releases:
 
 ## Inputs
 
-| Name  | Requried | Description      | Default               |
-| ----- | -------- | ---------------- | --------------------- |
-| repo  | **true** | The github repo  |                       |
-| tag   | false    | The release tag  | latest                |
-| name  | false    | The binary name  |                       |
-| token | false    | The github token | `${{ github.token }}` |
+| Name  | Requried | Description           | Default               |
+| ----- | -------- | --------------------- | --------------------- |
+| repo  | **true** | The github repo       |                       |
+| tag   | false    | The release tag       | latest                |
+| name  | false    | The binary name       |                       |
+| cache | false    | Whether to use cache` | true                  |
+| token | false    | The github token      | `${{ github.token }}` |
 
 ## Examples
 
@@ -26,7 +27,9 @@ steps:
       repo: sigoden/argc
 ```
 
-### Specific a Tag
+### Specific tag and name
+
+The `protocolbuffers/protobuf` repository has a binary named `protoc`, not `protobuf`.
 
 ```yaml
 # ...
@@ -35,9 +38,10 @@ steps:
     with:
       repo: protocolbuffers/protobuf
       tag: v26.1
+      name: protoc
 ```
 
-### Specific a Name
+The `WebAssembly/binaryen` repository has many binaries.  We only install a specific one based on the provided name option.
 
 Specifying a name is helpful when the release includes multiple binaries.
 

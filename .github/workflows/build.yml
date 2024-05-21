@@ -28,6 +28,7 @@ jobs:
       uses: ./
       with:
         repo: sigoden/argc
+        cache: false
     - name: Test
       run: |
         argc --argc-version
@@ -45,6 +46,8 @@ jobs:
       with:
         repo: protocolbuffers/protobuf
         tag: v26.1
+        name: protoc
+        cache: false
     - name: Test
       run: |
         protoc --version
@@ -61,6 +64,7 @@ jobs:
       uses: ./
       with:
         repo: go-task/task
+        cache: false
     - name: Test
       run: |
         task --version
@@ -77,6 +81,7 @@ jobs:
       uses: ./
       with:
         repo: jqlang/jq
+        cache: false
     - name: Test
       run: |
         jq --version
