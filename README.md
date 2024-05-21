@@ -22,7 +22,7 @@ This action installs a binary from Github Releases:
 ```yaml
 # ...
 steps:
-  - uses: sigoden/install-binary@v0.1.0
+  - uses: sigoden/install-binary@v1
     with:
       repo: sigoden/argc
 ```
@@ -34,7 +34,7 @@ The `protocolbuffers/protobuf` repository has a binary named `protoc`, not `prot
 ```yaml
 # ...
 steps:
-  - uses: sigoden/install-binary@v0.1.0
+  - uses: sigoden/install-binary@v1
     with:
       repo: protocolbuffers/protobuf
       tag: v26.1
@@ -48,7 +48,7 @@ Specifying a name is helpful when the release includes multiple binaries.
 ```yaml
 # ...
 steps:
-  - uses: sigoden/install-binary@v0.1.0
+  - uses: sigoden/install-binary@v1
     with:
       repo: WebAssembly/binaryen
       name: wasm-opt
@@ -60,7 +60,7 @@ Use a repo scoped [Personal Access Token (PAT)](https://docs.github.com/en/authe
 ```yaml
 # ...
 steps:
-  - uses: sigoden/install-binary@v0.1.0
+  - uses: sigoden/install-binary@v1
     with:
       repo: my-org/my-private-repo
       token: ${{ secrets.MY_PAT }}
