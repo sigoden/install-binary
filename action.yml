@@ -13,12 +13,12 @@ inputs:
     default: latest
   name:
     description: The binary name
-  cache:
-    description: Whether to disable cache
-    default: true
   token:
     description: The github token
     default: ${{ github.token }}
+  cache:
+    description: Use cache
+    default: true
 runs:
   using: node20
   main: dist/index.js

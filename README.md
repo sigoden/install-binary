@@ -7,13 +7,13 @@ This action installs a binary from Github Releases:
 
 ## Inputs
 
-| Name  | Requried | Description           | Default               |
-| ----- | -------- | --------------------- | --------------------- |
-| repo  | **true** | The github repo       |                       |
-| tag   | false    | The release tag       | latest                |
-| name  | false    | The binary name       |                       |
-| cache | false    | Whether to use cache` | true                  |
-| token | false    | The github token      | `${{ github.token }}` |
+| Name  | Required | Description      | Default               |
+| ----- | -------- | ---------------- | --------------------- |
+| repo  | **true** | The github repo  |                       |
+| tag   | false    | The release tag  | latest                |
+| name  | false    | The binary name  |                       |
+| token | false    | The github token | `${{ github.token }}` |
+| cache | false    | Use cache        | true                  |
 
 ## Examples
 
