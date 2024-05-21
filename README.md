@@ -1,5 +1,6 @@
 # install-binary
 
+
 [![CI](https://img.shields.io/github/actions/workflow/status/sigoden/aichat/ci.yaml)](https://github.com/sigoden/install-binary/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/sigoden/install-binary)](https://github.com/sigoden/install-binary/releases)
 
@@ -16,8 +17,8 @@ This action installs a binary from Github Releases:
 | `repo`  | **true** | The GitHub repository in `owner/repo` format  |                       |
 | `tag`   | false    | The release tag to download                   | `latest`              |
 | `name`  | false    | The specific binary name within the release   |                       |
+| `cache` | false    | Controls whether the binary is cached         | `false`               |
 | `token` | false    | GitHub token, useful for private repositories | `${{ github.token }}` |
-| `cache` | false    | Controls whether the binary is cached         | `true`                |
 
 ## Usage Examples
 

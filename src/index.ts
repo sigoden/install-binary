@@ -91,7 +91,7 @@ async function run() {
     core.info(`==> Binaries will be located at: ${installDir}`);
     await fs.promises.mkdir(installDir, { recursive: true });
 
-    const withCache = (core.getInput("cache") || "true") === "true";
+    const withCache = core.getInput("cache") === "true";
     const cacheKey = `install-binary/${owner}/${repo}/${tag}/${osPlatform}-${osArch}`;
     if (withCache) {
       const ok = await cache.restoreCache([installDir], cacheKey);

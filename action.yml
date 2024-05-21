@@ -13,12 +13,12 @@ inputs:
     default: latest
   name:
     description: The specific binary name within the release
+  cache:
+    description: Controls whether the binary is cached
+    default: false
   token:
     description: GitHub token, useful for private repositories
     default: ${{ github.token }}
-  cache:
-    description: Controls whether the binary is cached
-    default: true
 runs:
   using: node20
   main: dist/index.js
