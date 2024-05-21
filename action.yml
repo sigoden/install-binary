@@ -1,4 +1,4 @@
-name: Install a binary from GitHub Releases
+name: Install Binary from GitHub Releases
 description: Easily install a binary from a GitHub Release that works across repositories in Rust, Go, C++, and more.
 author: sigoden <sigoden@gmail.com>
 branding:
