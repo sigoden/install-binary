@@ -1,4 +1,4 @@
-name: Install Binary from GitHub Releases
+name: Install a binary from GitHub Releases
 description: Easily install a binary from a GitHub Release that works across repositories in Rust, Go, C++, and more.
 author: sigoden <sigoden@gmail.com>
 branding:
@@ -6,18 +6,18 @@ branding:
   color: green
 inputs:
   repo:
-    description: The github repo
+    description: The GitHub repository in `owner/repo` format
     required: true
   tag:
-    description: The release tag
+    description: The release tag to download
     default: latest
   name:
-    description: The binary name
+    description: The specific binary name within the release
   token:
-    description: The github token
+    description: GitHub token, useful for private repositories
     default: ${{ github.token }}
   cache:
-    description: Use cache
+    description: Controls whether the binary is cached
     default: true
 runs:
   using: node20

@@ -6,21 +6,24 @@
 This action installs a binary from Github Releases:
 
 - Automatically downloads and caches the binary, adding it to the PATH.
-- Particularly useful for installing single-file binaries like most Go or Rust tools.      
+- Supports specific release tags and binary names.
+- Particularly useful for installing single-file binaries such as those developed with Go or Rust.
 
 ## Inputs
 
-| Name  | Required | Description      | Default               |
-| ----- | -------- | ---------------- | --------------------- |
-| repo  | **true** | The github repo  |                       |
-| tag   | false    | The release tag  | latest                |
-| name  | false    | The binary name  |                       |
-| token | false    | The github token | `${{ github.token }}` |
-| cache | false    | Use cache        | true                  |
+| Name    | Required | Description                                   | Default               |
+| ------- | -------- | --------------------------------------------- | --------------------- |
+| `repo`  | **true** | The GitHub repository in `owner/repo` format  |                       |
+| `tag`   | false    | The release tag to download                   | `latest`              |
+| `name`  | false    | The specific binary name within the release   |                       |
+| `token` | false    | GitHub token, useful for private repositories | `${{ github.token }}` |
+| `cache` | false    | Controls whether the binary is cached         | `true`                |
 
-## Examples
+## Usage Examples
 
-### Basic 
+### Basic Installation
+
+Install the latest binary from a public GitHub repository.
 
 ```yaml
 # ...
@@ -30,9 +33,9 @@ steps:
       repo: sigoden/argc
 ```
 
-### Specific tag and name
+### Installing a Binary with a Specific Tag and Name
 
-The `protocolbuffers/protobuf` repository has a binary named `protoc`, not `protobuf`.
+Install a specific binary (`protoc`) from a given release tag (`v26.1`) in the `protocolbuffers/protobuf` repository.
 
 ```yaml
 # ...
@@ -44,9 +47,7 @@ steps:
       name: protoc
 ```
 
-The `WebAssembly/binaryen` repository has many binaries.  We only install a specific one based on the provided name option.
-
-Specifying a name is helpful when the release includes multiple binaries.
+Install a specific binary (`wasm-opt`) from the `WebAssembly/binaryen` repository, which contains multiple binaries.
 
 ```yaml
 # ...
@@ -57,8 +58,9 @@ steps:
       name: wasm-opt
 ```
 
-### Use a private repository
-Use a repo scoped [Personal Access Token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) that has been created on a user with access to the private repository.
+### Using a Private Repository
+
+Install a binary from a private repository using a [Personal Access Token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
 ```yaml
 # ...
