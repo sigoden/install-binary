@@ -106,7 +106,7 @@ async function run() {
     }
 
     const assetName = selectAsset(
-      release.data.assets.map((v) => v.name),
+      release.data.assets.filter((v) => v.size > 1024 * 10).map((v) => v.name),
       cmdName,
       osPlatform,
       osArch,
@@ -247,7 +247,9 @@ function selectAsset(
     "i",
   );
 
-  const list: string[] = assets.filter((name) => reTarget.test(name));
+  let list: string[] = assets
+    .filter((name) => reTarget.test(name))
+    .filter((name) => !/\.(rpm|deb|dmg|flatpak|msi)$/.test(name));
 
   if (list.length === 0) {
     const targetWords: string[] = [];
@@ -278,12 +280,22 @@ function selectAsset(
   if (list.length === 1) {
     return list[0];
   } else if (list.length > 1) {
-    if (list[0].includes("linux-gnu") && list[1].includes("linux-musl")) {
-      return list[1];
-    } else if (!list[0].includes(binName)) {
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].includes(binName)) {
-          return list[i];
+    const strictList = list.filter((v) => v.includes(binName));
+    if (strictList.length === 1) {
+      return strictList[0];
+    } else if (strictList.length > 1) {
+      list = strictList;
+    }
+    list.sort();
+    if (list.length === 2) {
+      if (list[0].includes("linux-gnu") && list[1].includes("linux-musl")) {
+        return list[1];
+      }
+      if (list[0].endsWith(".tar.gz") && list[1].endsWith(".zip")) {
+        if (osPlatform == "windows") {
+          return list[1];
+        } else {
+          return list[0];
         }
       }
     }

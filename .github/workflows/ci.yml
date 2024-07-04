@@ -99,3 +99,19 @@ jobs:
       run: |
         jq --version
       shell: bash
+
+  test-install-nats:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install binary
+        uses: ./
+        with:
+          repo: nats-io/nats-server
+      - name: Test
+        run: |
+          nats-server --version
+        shell: bash
