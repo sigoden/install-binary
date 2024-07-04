@@ -106,7 +106,7 @@ async function run() {
     }
 
     const assetName = selectAsset(
-      release.data.assets.map((v) => v.name),
+      release.data.assets.filter((v) => v.size > 1024 * 10).map((v) => v.name),
       cmdName,
       osPlatform,
       osArch,
@@ -247,7 +247,9 @@ function selectAsset(
     "i",
   );
 
-  const list: string[] = assets.filter((name) => reTarget.test(name));
+  const list: string[] = assets
+    .filter((name) => reTarget.test(name))
+    .filter((v) => !/\.(rpm|deb|dmg|flatpak|msi)$/.test(v));
 
   if (list.length === 0) {
     const targetWords: string[] = [];
@@ -278,8 +280,18 @@ function selectAsset(
   if (list.length === 1) {
     return list[0];
   } else if (list.length > 1) {
-    if (list[0].includes("linux-gnu") && list[1].includes("linux-musl")) {
+    if (
+      list.length == 2 &&
+      list[0].includes("linux-gnu") &&
+      list[1].includes("linux-musl")
+    ) {
       return list[1];
+    } else if (
+      list.length == 2 &&
+      list[0].includes("linux-musl") &&
+      list[1].includes("linux-gnu")
+    ) {
+      return list[0];
     } else if (!list[0].includes(binName)) {
       for (let i = 1; i < list.length; i++) {
         if (list[i].includes(binName)) {
