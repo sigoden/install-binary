@@ -153,6 +153,7 @@ async function run() {
       } catch (err) {
         throw new Error(
           `Failed to extract ${assetFile} to ${uncompressDir}, error: ${err}`,
+          { cause: err },
         );
       }
       const files = await listFiles(uncompressDir);

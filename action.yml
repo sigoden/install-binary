@@ -20,5 +20,5 @@ inputs:
     description: GitHub token, useful for private repositories
     default: ${{ github.token }}
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
